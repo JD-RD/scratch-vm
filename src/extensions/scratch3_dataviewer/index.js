@@ -1,9 +1,19 @@
+/* eslint-disable camelcase */
+/* eslint-disable prefer-arrow-callback */
+/* eslint-disable no-warning-comments */
+/* eslint-disable spaced-comment */
+/* eslint-disable prefer-template */
+/* eslint-disable no-var */
+/* eslint-disable no-unreachable */
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const Cast = require('../../util/cast');
 const nets = require('nets');
 const formatMessage = require('format-message');
+const Video = require('../../io/video');
+
+const VideoMotion = require('../scratch3_video_sensing/library');
 
 // eslint-disable-next-line max-len
 const blockIconURI = 'data:image/png;base64,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';
@@ -13,13 +23,104 @@ const menuIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABTCAYAA
 
 const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
+/**
+ * States the video sensing activity can be set to.
+ * @readonly
+ * @enum {string}
+ */
+const VideoState = {
+    /** Video turned off. */
+    OFF: 'off',
+
+    /** Video turned on with default y axis mirroring. */
+    ON: 'on',
+
+    /** Video turned on without default y axis mirroring. */
+    ON_FLIPPED: 'on-flipped'
+};
+
 class Scratch3DataViewerBlocks {
 
     constructor (runtime) {
         this._runtime = runtime;
+
+        /**
+         * A flag to determine if this extension has been installed in a project.
+         * It is set to false the first time getInfo is run.
+         * @type {boolean}
+         */
+        this.firstInstall = true;
+    }
+
+    /**
+     * Get the latest values for video transparency and state,
+     * and set the video device to use them.
+     */
+    updateVideoDisplay () {
+        this.setVideoTransparency({
+            TRANSPARENCY: this.globalVideoTransparency
+        });
+        this.videoToggle({
+            VIDEO_STATE: this.globalVideoState
+        });
+    }
+
+    /**
+     * The video state of the video preview stored in a value accessible by any
+     * object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoState () {
+        const stage = this._runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoState;
+        }
+        // Though the default value for the stage is normally 'on', we need to default
+        // to 'off' here to prevent the video device from briefly activating
+        // while waiting for stage targets to be installed that say it should be off
+        return VideoState.OFF;
+    }
+
+    set globalVideoState (state) {
+        const stage = this._runtime.getTargetForStage();
+        if (stage) {
+            stage.videoState = state;
+        }
+        return state;
+    }
+
+    /**
+     * The transparency setting of the video preview stored in a value
+     * accessible by any object connected to the virtual machine.
+     * @type {number}
+     */
+    get globalVideoTransparency () {
+        const stage = this._runtime.getTargetForStage();
+        if (stage) {
+            return stage.videoTransparency;
+        }
+        return 50;
+    }
+
+    set globalVideoTransparency (transparency) {
+        const stage = this._runtime.getTargetForStage();
+        if (stage) {
+            stage.videoTransparency = transparency;
+        }
+        return transparency;
     }
 
     getInfo () {
+        // Set the video display properties to defaults the first time
+        // getInfo is run. This turns on the video device when it is
+        // first added to a project, and is overwritten by a PROJECT_LOADED
+        // event listener that later calls updateVideoDisplay
+        if (this.firstInstall) {
+            this.globalVideoState = VideoState.ON;
+            this.globalVideoTransparency = 50;
+            this.updateVideoDisplay();
+            this.firstInstall = false;
+        }
         return {
             id: 'dataviewer',
             name: formatMessage({
@@ -30,6 +131,14 @@ class Scratch3DataViewerBlocks {
             menuIconURI: menuIconURI,
             blockIconURI: blockIconURI,
             blocks: [
+                {
+                    opcode: 'videoSnapshot',
+                    text: formatMessage({
+                        id: 'videoSensing.videoSnapshot',
+                        default: 'take video snapshot',
+                        description: 'Controls display of the video preview layer'
+                    })
+                },
                 {
                     opcode: 'setData',
                     text: formatMessage({
@@ -199,6 +308,20 @@ class Scratch3DataViewerBlocks {
                             defaultValue: 1
                         }
                     }
+                },
+                {
+                    opcode: 'setVideoTransparency',
+                    text: formatMessage({
+                        id: 'videoSensing.setVideoTransparency',
+                        default: 'set video transparency to [TRANSPARENCY]',
+                        description: 'Controls transparency of the video preview layer'
+                    }),
+                    arguments: {
+                        TRANSPARENCY: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
                 }
             ],
             menus: {
@@ -292,7 +415,7 @@ class Scratch3DataViewerBlocks {
 
     _getMin () {
         if (this.getDataLength() > 0) {
-            return this.data.reduce(function(a, b) {
+            return this.data.reduce(function (a, b) {
                 return Math.min(a, b);
             });
         }
@@ -300,7 +423,7 @@ class Scratch3DataViewerBlocks {
 
     _getMax () {
         if (this.getDataLength() > 0) {
-            return this.data.reduce(function(a, b) {
+            return this.data.reduce(function (a, b) {
                 return Math.max(a, b);
             });
         }
@@ -418,27 +541,27 @@ class Scratch3DataViewerBlocks {
         if (this.dataIndex < this.getDataLength()) {
             this.dataIndex++;
         }
+
         if (this.dataIndex < this.getDataLength()) {
             util.startBranch(1, true);
-        }
-        else {
+        } else {
             this.dataIndex = -1;
         }
     }
 
     getStatistic (args) {
-        switch(args.FNC) {
-            case "mean":
-                return this._getMean();
-                break;
-            case "min":
-                return this._getMin();
-                break;
-            case "max":
-                return this._getMax();
-                break;
-            default:
-                return "error";
+        switch (args.FNC) {
+        case 'mean':
+            return this._getMean();
+            break;
+        case 'min':
+            return this._getMin();
+            break;
+        case 'max':
+            return this._getMax();
+            break;
+        default:
+            return 'error';
         }
     }
 
@@ -453,20 +576,20 @@ class Scratch3DataViewerBlocks {
 
     mapData (args) {
         switch(args.DATA_TYPE) {
-            case "index":
-                if (this.getDataLength() > 0) {
-                    return Cast.toNumber(this._mapValue(
-                        this._getInternalIndex(), 0, this.getDataLength() - 1, Cast.toNumber(args.NEW_MIN), Cast.toNumber(args.NEW_MAX)));
-                }
-                break;
-            case "value":
-                if (this.getDataLength() > 0) {
-                    return Cast.toNumber(this._mapValue(
-                         this.getValue(), this._getMin(), this._getMax(), Cast.toNumber(args.NEW_MIN), Cast.toNumber(args.NEW_MAX)));
-                }
-                break;
-            default:
-                return "error";
+        case 'index':
+            if (this.getDataLength() > 0) {
+                return Cast.toNumber(this._mapValue(
+                    this._getInternalIndex(), 0, this.getDataLength() - 1, Cast.toNumber(args.NEW_MIN), Cast.toNumber(args.NEW_MAX)));
+            }
+            break;
+        case 'value':
+            if (this.getDataLength() > 0) {
+                return Cast.toNumber(this._mapValue(
+                    this.getValue(), this._getMin(), this._getMax(), Cast.toNumber(args.NEW_MIN), Cast.toNumber(args.NEW_MAX)));
+            }
+            break;
+        default:
+            return 'error';
         }
     }
 
@@ -475,6 +598,52 @@ class Scratch3DataViewerBlocks {
             return this.data[args.INDEX - 1];
         }
     }
+
+    // Video Stuff Starts Here
+
+    /**
+     * A scratch command block handle that captures an image
+     * from the webcam feed.
+     */
+    videoSnapshot () {
+        // debugger;
+        if (this.globalVideoState === VideoState.OFF) {
+            this._runtime.ioDevices.video.enableVideo();
+        }
+        this._runtime.ioDevices.video.getSnapshot();
+    }
+    
+    /**
+     * A scratch command block handle that configures the video state from
+     * passed arguments.
+     * @param {object} args - the block arguments
+     * @param {VideoState} args.VIDEO_STATE - the video state to set the device to
+     */
+    videoToggle (args) {
+        const state = args.VIDEO_STATE;
+        this.globalVideoState = state;
+        if (state === VideoState.OFF) {
+            this._runtime.ioDevices.video.disableVideo();
+        } else {
+            this._runtime.ioDevices.video.enableVideo();
+            // Mirror if state is ON. Do not mirror if state is ON_FLIPPED.
+            this._runtime.ioDevices.video.mirror = state === VideoState.ON;
+        }
+    }
+
+    /**
+     * A scratch command block handle that configures the video preview's
+     * transparency from passed arguments.
+     * @param {object} args - the block arguments
+     * @param {number} args.TRANSPARENCY - the transparency to set the video
+     *   preview to
+     */
+    setVideoTransparency (args) {
+        const transparency = Cast.toNumber(args.TRANSPARENCY);
+        this.globalVideoTransparency = transparency;
+        this._runtime.ioDevices.video.setPreviewGhost(transparency);
+    }
+    // Video Stuff Ends Here
 
 }
 

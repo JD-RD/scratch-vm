@@ -127,6 +127,18 @@ class Video {
     }
 
     /**
+     * Get a 64base pic
+     */
+    getSnapshot () {
+        this.provider.broadcastBlob();
+        // var broadcastChannel = new BroadcastChannel('kcj_ai_channel');
+        // broadcastChannel.postMessage({'type' : 'image', 'image' : snapshotBlob, 'label' : "snapshot"});
+        // console.log('was able to broadcast imageBlob');
+        // console.log(snapshotBlob);
+        // return snapshotBlob;
+    }
+
+    /**
      * Set the preview ghost effect
      * @param {number} ghost from 0 (visible) to 100 (invisible) - ghost effect
      */
