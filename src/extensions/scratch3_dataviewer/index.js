@@ -24,6 +24,32 @@ const menuIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABTCAYAA
 const serverTimeoutMs = 10000; // 10 seconds (chosen arbitrarily).
 
 /**
+ * Subject video sensor block should report for.
+ * @readonly
+ * @enum {string}
+ */
+const SensingSubject = {
+    /** The sensor traits of the whole stage. */
+    STAGE: 'Stage',
+
+    /** The senosr traits of the area overlapped by this sprite. */
+    SPRITE: 'this sprite'
+};
+
+/**
+ * Sensor attribute video sensor block should report.
+ * @readonly
+ * @enum {string}
+ */
+const SensingAttribute = {
+    /** The amount of motion. */
+    MOTION: 'motion',
+
+    /** The direction of the motion. */
+    DIRECTION: 'direction'
+};
+
+/**
  * States the video sensing activity can be set to.
  * @readonly
  * @enum {string}
@@ -50,6 +76,116 @@ class Scratch3DataViewerBlocks {
          * @type {boolean}
          */
         this.firstInstall = true;
+    }
+
+    /**
+     * Create data for a menu in scratch-blocks format, consisting of an array
+     * of objects with text and value properties. The text is a translated
+     * string, and the value is one-indexed.
+     * @param {object[]} info - An array of info objects each having a name
+     *   property.
+     * @return {array} - An array of objects with text and value properties.
+     * @private
+     */
+    _buildMenu (info) {
+        return info.map((entry, index) => {
+            const obj = {};
+            obj.text = entry.name;
+            obj.value = entry.value || String(index + 1);
+            return obj;
+        });
+    }
+
+    /**
+     * An array of choices of whether a reporter should return the frame's
+     * motion amount or direction.
+     * @type {object[]}
+     * @param {string} name - the translatable name to display in sensor
+     *   attribute menu
+     * @param {string} value - the serializable value of the attribute
+     */
+    get ATTRIBUTE_INFO () {
+        return [
+            {
+                name: formatMessage({
+                    id: 'videoSensing.motion',
+                    default: 'motion',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
+                value: SensingAttribute.MOTION
+            },
+            {
+                name: formatMessage({
+                    id: 'videoSensing.direction',
+                    default: 'direction',
+                    description: 'Attribute for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
+                value: SensingAttribute.DIRECTION
+            }
+        ];
+    }
+
+    /**
+     * An array of info about the subject choices.
+     * @type {object[]}
+     * @param {string} name - the translatable name to display in the subject menu
+     * @param {string} value - the serializable value of the subject
+     */
+    get SUBJECT_INFO () {
+        return [
+            {
+                name: formatMessage({
+                    id: 'videoSensing.sprite',
+                    default: 'sprite',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
+                value: SensingSubject.SPRITE
+            },
+            {
+                name: formatMessage({
+                    id: 'videoSensing.stage',
+                    default: 'stage',
+                    description: 'Subject for the "video [ATTRIBUTE] on [SUBJECT]" block'
+                }),
+                value: SensingSubject.STAGE
+            }
+        ];
+    }
+
+    /**
+     * An array of info on video state options for the "turn video [STATE]" block.
+     * @type {object[]}
+     * @param {string} name - the translatable name to display in the video state menu
+     * @param {string} value - the serializable value stored in the block
+     */
+    get VIDEO_STATE_INFO () {
+        return [
+            {
+                name: formatMessage({
+                    id: 'videoSensing.off',
+                    default: 'off',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
+                value: VideoState.OFF
+            },
+            {
+                name: formatMessage({
+                    id: 'videoSensing.on',
+                    default: 'on',
+                    description: 'Option for the "turn video [STATE]" block'
+                }),
+                value: VideoState.ON
+            },
+            {
+                name: formatMessage({
+                    id: 'videoSensing.onFlipped',
+                    default: 'on flipped',
+                    description: 'Option for the "turn video [STATE]" block that causes the video to be flipped' +
+                        ' horizontally (reversed as in a mirror)'
+                }),
+                value: VideoState.ON_FLIPPED
+            }
+        ];
     }
 
     /**
@@ -108,6 +244,10 @@ class Scratch3DataViewerBlocks {
             stage.videoTransparency = transparency;
         }
         return transparency;
+    }
+
+    static get SensingAttribute () {
+        return SensingAttribute;
     }
 
     getInfo () {
@@ -322,6 +462,21 @@ class Scratch3DataViewerBlocks {
                             defaultValue: 50
                         }
                     }
+                },
+                {
+                    opcode: 'videoToggle',
+                    text: formatMessage({
+                        id: 'videoSensing.videoToggle',
+                        default: 'turn video [VIDEO_STATE]',
+                        description: 'Controls display of the video preview layer'
+                    }),
+                    arguments: {
+                        VIDEO_STATE: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'VIDEO_STATE',
+                            defaultValue: VideoState.ON
+                        }
+                    }
                 }
             ],
             menus: {
@@ -363,7 +518,19 @@ class Scratch3DataViewerBlocks {
                         }),
                         value: 'index'
                     }
-                ]
+                ],
+                ATTRIBUTE: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.ATTRIBUTE_INFO)
+                },
+                SUBJECT: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.SUBJECT_INFO)
+                },
+                VIDEO_STATE: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.VIDEO_STATE_INFO)
+                }
             }
         };
     }

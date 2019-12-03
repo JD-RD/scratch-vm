@@ -131,11 +131,6 @@ class Video {
      */
     getSnapshot () {
         this.provider.broadcastBlob();
-        // var broadcastChannel = new BroadcastChannel('kcj_ai_channel');
-        // broadcastChannel.postMessage({'type' : 'image', 'image' : snapshotBlob, 'label' : "snapshot"});
-        // console.log('was able to broadcast imageBlob');
-        // console.log(snapshotBlob);
-        // return snapshotBlob;
     }
 
     /**
